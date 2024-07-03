@@ -68,5 +68,5 @@ const API = {
   GET_PAYMENT_URL: "/api/method/pharm_ehr_tenant.api.get_payment_url"
 };
 
-export const BASE_URL = import.meta.env.VITE_FRAPPE_BASE_URL;
+export const BASE_URL = "https://stage.rxbb.io";
 export default API;
