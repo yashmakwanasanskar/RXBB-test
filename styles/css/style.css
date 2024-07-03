@@ -1,0 +1,62 @@
+ /* .rbc-event-content{
+    background-color: #E5F3FE;
+    color: #4291FA;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}  */
+
+.rbc-time-header-cell, .rbc-month-header{
+    background: #DAE0F0;
+    height: 3.5rem;
+    align-items: center;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.rbc-header :only-child{
+    color: #5C648D;
+    font-weight: 500;
+    font-size: larger;
+}
+
+.rbc-today{
+background-color: transparent !important;  
+}
+
+.rbc-current :only-child{
+    background-color: #4291FA;
+    border-radius: 100%;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: white;
+    font-weight: 100;
+} 
+
+.rbc-event{
+    background-color: transparent !important;
+     color: #4291FA !important;
+}
+.rbc-addons-dnd-resize-ew-anchor{
+    top:50% !important
+}
+
+.rbc-events-container>div{
+    background-color: #E5F3FE !important;
+    color: #4291FA !important;
+    font-weight: 600;
+}
+.rbc-month-view{
+    border-top-right-radius:22px;
+    border-top-left-radius:22px;
+}
+.rbc-time-header-content{
+    border-top-right-radius:19px;
+    border-top-left-radius:19px;
+}
+.rbc-time-view{
+    border-top-right-radius: 20px;
+}
+.rbc-time-header{
+    border-top-right-radius: 20px;
+}

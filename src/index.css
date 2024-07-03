@@ -1,0 +1,291 @@
+@import 'react-international-phone/style.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    font-family: Poppins, 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground overflow-hidden select-text;
+  }
+}
+
+@layer components {
+  .app-tab-heading {
+    @apply mb-4 font-medium text-2xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl 2xl:text-4xl;
+  }
+
+  .heading-text-xl {
+    @apply xl:text-xl sm:text-lg text-base;
+  }
+
+  .label-text-sm {
+    @apply xl:text-sm text-xs;
+  }
+
+  .input-text-sm {
+    @apply xl:text-sm text-xs;
+  }
+
+  .label-text-base {
+    @apply xl:text-base sm:text-sm text-xs;
+  }
+
+  .label-text-lg {
+    @apply xl:text-lg sm:text-base text-sm;
+  }
+}
+
+.pharmehr-table-center>tr>th {
+  text-align: left;
+}
+
+.pharmehr-table-padding>tr>td>div {
+  margin: 10px;
+  margin-left: 15px;
+}
+
+.polygon {
+  float: left;
+  padding-left: 2%;
+  clip-path: polygon(1% 0%,
+      100% 0%,
+      100% 100%,
+      1% 100%,
+      1% 27%,
+      0% 20%,
+      1% 13%);
+}
+
+/* Temporary adding css */
+.ant-picker-calendar .ant-picker-cell-disabled::before {
+  width: fit-content;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border: none !important;
+}
+
+.ant-picker-cell-in-view:not(.ant-picker-cell-disabled) .ant-picker-cell-inner {
+  border: 1px solid #61CE70;
+  border-radius: 100%;
+}
+
+.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+  border: 1px solid #61CE70 !important;
+  color: #61CE70;
+}
+
+.ant-picker-calendar .ant-picker-cell-in-view.ant-picker-cell-selected:not(.ant-picker-cell-disabled) .ant-picker-cell-inner {
+  background: #61CE70 !important;
+}
+
+.slick-slide>div,
+.slick-list,
+.slick-slider,
+.ant-carousel,
+.slick-track {
+  height: 100% !important;
+}
+
+.ant-carousel .slick-dots li {
+  width: 26% !important;
+  height: 20px;
+}
+
+.react-calendar {
+  border: none !important;
+  width: 100% !important;
+}
+
+
+
+.react-calendar__viewContainer {
+  background-color: #F9F9F9;
+  padding: 25px 16px;
+  border-radius: 18px !important;
+}
+
+.react-calendar__tile {
+  border-radius: 100%;
+  padding: 5px 5px !important;
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: #020817 !important;
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: #757575 !important;
+}
+
+.react-calendar .react-calendar__tile,
+.react-calendar .react-calendar__month-view__weekdays__weekday {
+  display: flex;
+  justify-content: center;
+}
+
+.react-calendar__tile--active abbr {
+  background: #61CE70;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile--now,
+.react-calendar__tile--active,
+.react-calendar__tile:disabled,
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__tile--hasActive,
+.react-calendar__navigation button:disabled {
+  background: transparent !important;
+}
+
+.react-calendar__tile--active abbr {
+  background: #61CE70 !important;
+  color: white;
+  font-weight: 500;
+}
+
+abbr {
+  height: 40px !important;
+  width: 40px !important;
+  border-radius: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.react-calendar__navigation__next2-button,
+.react-calendar__navigation__prev2-button {
+  display: none;
+}
+
+
+.react-calendar__navigation__prev-button,
+.react-calendar__navigation__next-button {
+  border: 1px solid #87878759 !important;
+  border-radius: 13px;
+  font-size: 30px;
+}
+
+.required-border{
+  border-color:#FF441B
+}
+.react-calendar__month-view__weekdays {
+  color: #61CE70
+}
+
+abbr:where([title]) {
+  text-decoration: none !important;
+}
+
+.react-calendar__navigation__label__labelText {
+  font-weight: 500;
+}
+
+.react-calendar__decade-view__years__year,
+.react-calendar__century-view__decades__decade {
+  padding: 20px 10px !important;
+}
+
+.react-calendar__tile:disabled {
+  color: #ababab !important;
+}
+
+.react-calendar__tile:not(:disabled) abbr {
+  border: 1px solid #61CE70;
+  background-color: white;
+}
+
+.phone-input .react-international-phone-input-container .react-international-phone-country-selector-button {
+  height: 46px !important;
+  border-top: none !important;
+  border-radius: 7px 0px 0px 7px;
+}
+
+@media screen and (max-width: 767px) {
+  .react-calendar {
+    width: auto !important;
+  }
+
+  abbr {
+    height: 25px !important;
+    width: 25px !important;
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  abbr {
+    height: 21px !important;
+    width: 21px !important;
+    font-size: 11px;
+  }
+}

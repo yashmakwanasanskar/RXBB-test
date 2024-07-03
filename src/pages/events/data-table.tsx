@@ -1,0 +1,764 @@
+import { DataTablePagination } from "@/components/shared/data-table-pagination";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AddEventImage,
+  EventLocationImage,
+  LinkImage,
+  patientListSearchIcon,
+  patientListViewIcon,
+} from "@/constants/images";
+import { PatientAppointmentList } from "@/types";
+import {
+  Cell,
+  ColumnDef,
+  ColumnFiltersState,
+  Header,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ArrowUpDown } from "lucide-react";
+import { CSSProperties, useId, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+// needed for table body level scope DnD setup
+import {
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+
+// needed for row & cell level scope DnD setup
+import {
+  EventFieldsData,
+  EventLabelData,
+  PatientAppointmentFieldsData,
+  PatientAppointmentLabelData,
+} from "@/constants/fields";
+import { changeColumnPosition } from "@/helpers/API/changePositionFields";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import ROUTES from "@/constants/routes.constats";
+import {
+  convertDateFormatToMMDDYYYY,
+  formatDateTime,
+  removeTimeFromDate,
+} from "@/utilities/utils";
+// Component for draggable table header
+const DraggableTableHeader = ({
+  header,
+}: {
+  header: Header<PatientAppointmentList, unknown>;
+}) => {
+  // Hook to enable sorting
+  const { attributes, isDragging, listeners, setNodeRef, transform } =
+    useSortable({ id: header.column.id });
+  const style: CSSProperties = {
+    opacity: isDragging ? 0.8 : 1,
+    position: "relative",
+    transform: CSS.Translate.toString(transform),
+    transition: "width transform 0.2s ease-in-out",
+    whiteSpace: "nowrap",
+    zIndex: isDragging ? 1 : 0,
+  };
+  return (
+    <th colSpan={header.colSpan} ref={setNodeRef} style={style}>
+      {/* Render the header content */}
+      {header.isPlaceholder
+        ? null
+        : flexRender(header.column.columnDef.header, header.getContext())}
+      {/* Render the sorting button */}
+      <button {...attributes} {...listeners}>
+        ::
+      </button>
+    </th>
+  );
+};
+
+// Component for draggable table cell
+const DragAlongCell = ({
+  cell,
+}: {
+  cell: Cell<PatientAppointmentList, unknown>;
+}) => {
+  // Hook to enable sorting
+  const { isDragging, setNodeRef, transform } = useSortable({
+    id: cell.column.id,
+  });
+  const style: CSSProperties = {
+    opacity: isDragging ? 0.8 : 1,
+    position: "relative",
+    transform: CSS.Translate.toString(transform),
+    transition: "width transform 0.2s ease-in-out",
+    zIndex: isDragging ? 1 : 0,
+  };
+  return (
+    <td style={style} ref={setNodeRef}>
+      {/* Render the cell content */}
+      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    </td>
+  );
+};
+
+// Main DataTable component
+export function DataTable({
+  data,
+  setFilter,
+  setPageSize,
+  getPageSize,
+  getAllDataCount,
+  getLimitStart,
+  setLimitStart,
+  filterProps,
+}: {
+  data: any;
+  setFilter: any;
+  setPageSize: any;
+  getPageSize: any;
+  getAllDataCount: number;
+  getLimitStart: number;
+  setLimitStart: any;
+  filterProps: any;
+}) {
+  // Define table columns
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const columns = useMemo<ColumnDef<PatientAppointmentList>[]>(
+    () => [
+      // Each column definition with accessor, header, cell renderer, and size
+      {
+        accessorKey: "subject",
+        id: "subject",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+              className="text-[#474747] font-semibold text-xs lg:text-sm"
+            >
+              Event
+              <ArrowUpDown className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }: any) => <div className="">{row.original.subject}</div>,
+        size: 0,
+      },
+      {
+        accessorKey: "status",
+        id: "status",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+              className="text-[#474747] font-semibold text-xs lg:text-sm"
+            >
+              STATUS
+              <ArrowUpDown className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }: any) => {
+          return (
+            <div>
+              <div
+                className={`md:w-28 xl:w-32 py-1.5 rounded-full mr-2 text-center place-content-center ${getStatusColor(
+                  row
+                )}`}
+              >
+                {row.original.status}
+              </div>
+            </div>
+          );
+        },
+        size: 60,
+      },
+      {
+        accessorKey: "name",
+        id: "name",
+
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              className="text-[#474747] font-semibold text-xs lg:text-sm"
+            >
+              ID
+              <ArrowUpDown className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }: any) => <div className=" ">{row.original.name}</div>,
+
+        size: 0,
+      },
+      {
+        accessorKey: "custom_patient_appointment_count",
+        id: "custom_patient_appointment_count",
+
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              className="text-[#474747] font-semibold text-xs lg:text-sm"
+            >
+              Registered Appointment
+              <ArrowUpDown className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }: any) => (
+          <div className=" ">
+            {row.original.custom_patient_appointment_count}
+          </div>
+        ),
+
+        size: 0,
+      },
+
+      {
+        accessorKey: "starts_on",
+        id: "starts_on",
+
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              className="text-[#474747] font-semibold text-xs lg:text-sm"
+            >
+              Starts On
+              <ArrowUpDown className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }: any) => (
+          <div className=" ">
+            {convertDateFormatToMMDDYYYY(
+              removeTimeFromDate(formatDateTime(row.original.starts_on))
+            )}
+          </div>
+        ),
+
+        size: 0,
+      },
+      {
+        accessorKey: "ends_on",
+        id: "ends_on",
+
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              className="text-[#474747] font-semibold text-xs lg:text-sm"
+            >
+              Ends On
+              <ArrowUpDown className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }: any) => (
+          <div className=" ">
+            {convertDateFormatToMMDDYYYY(
+              removeTimeFromDate(formatDateTime(row.original.ends_on))
+            )}
+          </div>
+        ),
+
+        size: 0,
+      },
+      {
+        id: "quick_link",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+              className="text-[#474747] font-semibold text-xs lg:text-sm"
+            >
+              Quick Links
+            </Button>
+          );
+        },
+        cell: ({ row }: any) => (
+          <div className="cursor-pointer space-x-3">
+            <Link
+              target="_blank"
+              className=""
+              to={`${`/booking?event=${row.original.name}`}`}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <Button
+                className="bg-[#F6F9FD] border gap-1 border-[#CCCCCC] text-[#303348]"
+                variant={"outline"}
+              >
+                <img
+                  src={LinkImage.path}
+                  alt={LinkImage.alt}
+                  className="w-5 h-5"
+                />
+                Event Registration link
+              </Button>
+            </Link>
+
+            {/* <Link
+              className=""
+              to=""
+              target="_blank"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <Button
+                className="bg-[#F6F9FD] border gap-1 border-[#CCCCCC] text-[#303348]"
+                variant={"outline"}
+              >
+                <img
+                  src={EventQRCodeImage.path}
+                  alt={EventQRCodeImage.alt}
+                  className="w-4 h-4"
+                />
+                Event QR Link
+              </Button>
+            </Link> */}
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+  const {
+    cmrServiceChecBox,
+    setCmrServiceChecBox,
+    immunizationServiceChecBox,
+    setImmunizationServiceChecBox,
+    getListofFields,
+    setListofFields,
+    customFilter,
+    setCustomFilter,
+  } = filterProps;
+  // Router hook for navigation
+  const router = useNavigate();
+  const [toggleView, setToggleView] = useState<boolean>(false);
+  const [openFilter, onOpenFilter] = useState<boolean>(false);
+  const [customFilterFieldState, setCustomFilterFieldState] = useState<any>([]);
+
+  // State hooks for table settings
+  const [columnOrder, setColumnOrder] = useState<string[]>(getListofFields);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+    EventFieldsData.filter(
+      (field: string) => !getListofFields.includes(field)
+    ).reduce((acc: { [key: string]: boolean }, field: string) => {
+      acc[field] = false;
+      return acc;
+    }, {})
+  );
+  const [events, setEvents] = useState<any>([]);
+  const [getAppointmenCalender, setAppointmentCalender] = useState<any>([]);
+
+  const [getAppointmentFilterCalender, setAppointmentFilterCalender] =
+    useState<any>([]);
+  // useEffect(() => {
+  //   console.log("getlistfield", getListofFields);
+  //   if (getListofFields) {
+  //     console.log(getListofFields, columnVisibility);
+  //     setColumnOrder(getListofFields);
+  //     setColumnVisibility(
+  //       PatientAppointmentFieldsData.filter(
+  //         (field: string) => !getListofFields.includes(field)
+  //       ).reduce((acc: { [key: string]: boolean }, field: string) => {
+  //         acc[field] = false;
+  //         return acc;
+  //       }, {})
+  //     );
+  //   }
+  // }, [getListofFields]);
+
+  // React-table hook to manage table state and interactions
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      columnOrder,
+    },
+    onColumnOrderChange: setColumnOrder,
+  });
+
+  // Handle drag end event for reordering columns
+  function handleDragEnd(event: any) {
+    const { active, over } = event;
+    if (active && over && active.id !== over.id) {
+      setColumnOrder((columnOrder) => {
+        const oldIndex = columnOrder.indexOf(active.id as string);
+        const newIndex = columnOrder.indexOf(over.id as string);
+        const newFieldData = arrayMove(columnOrder, oldIndex, newIndex);
+        const visibleChangedFields = {
+          disable_count: 1,
+          disable_comment_count: 1,
+          disable_sidebar_stats: 1,
+          disable_auto_refresh: 1,
+          total_fields: newFieldData.length,
+          fields: JSON.stringify(
+            newFieldData.map((field: string) => {
+              return { fieldname: field, label: EventLabelData[field] };
+            })
+          ),
+        };
+
+        // Perform the async operation outside of the state update
+        changeColumnPosition("Event", visibleChangedFields, [])
+          .then((response) => {
+            setListofFields(response);
+          })
+          .catch((error) => {
+            console.error("Error changing column position", error);
+          });
+
+        return newFieldData;
+      });
+    }
+  }
+
+  // Define sensors for drag and drop functionality
+  const sensors = useSensors(
+    useSensor(MouseSensor, {}),
+    useSensor(TouchSensor, {}),
+    useSensor(KeyboardSensor, {})
+  );
+  const id = useId();
+
+  function onAddPatientHandleClick() {
+    router("/events/add-event");
+  }
+
+  const removedAddFields = async (value: boolean, column: any) => {
+    if (value) {
+      console.log(getListofFields);
+      const newAppendedList = getListofFields.concat(column.id);
+      const visibleChangedFields = {
+        disable_count: 1,
+        disable_comment_count: 1,
+        disable_sidebar_stats: 1,
+        disable_auto_refresh: 1,
+        total_fields: getListofFields.length + 1,
+        fields: JSON.stringify(
+          newAppendedList.map((field: string) => {
+            return {
+              fieldname: field,
+              label: EventLabelData[field],
+            };
+          })
+        ),
+      };
+      const response = await changeColumnPosition(
+        "Event",
+        visibleChangedFields,
+        []
+      );
+
+      setListofFields(response);
+    } else {
+      const newDeletedList = getListofFields.filter(
+        (field: string) => field !== column.id
+      );
+      const visibleChangedFields = {
+        disable_count: 1,
+        disable_comment_count: 1,
+        disable_sidebar_stats: 1,
+        disable_auto_refresh: 1,
+        total_fields: newDeletedList.length,
+        fields: JSON.stringify(
+          newDeletedList.map((field: string) => {
+            return {
+              fieldname: field,
+              label: EventLabelData[field],
+            };
+          })
+        ),
+      };
+      const response = await changeColumnPosition(
+        "Event",
+        visibleChangedFields,
+        [column.id]
+      );
+      setListofFields(response);
+    }
+  };
+
+  // JSX for rendering the DataTable component
+  return (
+    <DndContext
+      collisionDetection={closestCenter}
+      modifiers={[restrictToHorizontalAxis]}
+      onDragEnd={handleDragEnd}
+      sensors={sensors}
+      id={id}
+    >
+      <div className="h-[calc(100vh-150px)]  flex flex-col overflow-auto space-y-4">
+        {/* Search, View, Add Patients Buttons */}
+        <div className="flex items-center justify-between pt-4">
+          <div className="border-2 rounded-xl w-40 sm:w-60 lg:w-[420px] relative block">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-2">
+              <img
+                src={patientListSearchIcon.path}
+                alt={patientListSearchIcon.alt}
+                width={20}
+                height={20}
+                className="h-5 w-5 fill-slate-300"
+              />
+            </span>
+
+            <Input
+              placeholder="Search by Event"
+              // value={
+              //   (table.getColumn("patient")?.getFilterValue() as string) ?? ""
+              // }
+              // onChange={(event) =>
+              //   table.getColumn("patient")?.setFilterValue(event.target.value)
+              // }
+              onChange={(event) => {
+                setFilter(event.target.value);
+              }}
+              className="lg:text-base placeholder:text-[#A6A6A6] block bg-[#FFFFFF] w-full border rounded-md py-2 pl-9 pr-3 sm:text-sm"
+            />
+          </div>
+          <div className="flex gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="ml-auto border border-[#CCCCCC]"
+                >
+                  <img
+                    src={patientListViewIcon.path}
+                    alt={patientListViewIcon.alt}
+                    width={25}
+                    height={100}
+                    className="sm:mr-2"
+                  />
+                  {/* <p className="hidden sm:block lg:text-sm">View</p> */}
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) => {
+                          if (value === false && getListofFields.length <= 4) {
+                            return;
+                          }
+                          column.toggleVisibility(!!value);
+                          removedAddFields(value, column);
+                        }}
+                      >
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="outline"
+              className="ml-auto border-2 border-[#CCCCCC] bg-white text-[#303348] font-semibold"
+              onClick={() => {
+                navigate(ROUTES.MANAGE_LOCATION);
+              }}
+            >
+              <img
+                src={EventLocationImage.path}
+                alt={EventLocationImage.alt}
+                width={20}
+                height={100}
+                className="sm:mr-2"
+              />
+              Manage Location
+              {/* <p className="hidden sm:block lg:text-sm">Filter</p> */}
+            </Button>
+
+            <Button
+              className=" text-[#0049C6] bg-white border-2 rounded-lg border-[#0049C6] font-medium sm:text-xs lg:text-sm 2xl:text-base"
+              onClick={onAddPatientHandleClick}
+            >
+              <img
+                src={AddEventImage.path}
+                alt={AddEventImage.alt}
+                width={25}
+                height={100}
+                className="sm:mr-2"
+              />
+              <p className="hidden sm:block lg:text-sm">Add Event</p>
+            </Button>
+          </div>
+        </div>
+
+        <div className={`overflow-auto flex-grow`}>
+          <div className="">
+            <Table>
+              <TableHeader className="bg-[#EBEBEB] pharmehr-table-center ">
+                {/* Table Header */}
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    <SortableContext
+                      items={columnOrder}
+                      strategy={horizontalListSortingStrategy}
+                    >
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <DraggableTableHeader
+                            key={header.id}
+                            header={header}
+                          />
+                        );
+                      })}
+                    </SortableContext>
+                  </TableRow>
+                ))}
+              </TableHeader>
+
+              <TableBody className="pharmehr-table-padding">
+                {/* Table Body */}
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className="font-medium sm:text-xs lg:text-sm bg-[#FFFFFF] cursor-pointer"
+                      onClickCapture={() =>
+                        router(`/events/${row.original.name}`)
+                      }
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <SortableContext
+                          key={cell.id}
+                          items={columnOrder}
+                          strategy={horizontalListSortingStrategy}
+                        >
+                          <DragAlongCell key={cell.id} cell={cell} />
+                        </SortableContext>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+        <DataTablePagination
+          table={table}
+          className="flex justify-between mt-4 sticky bottom-1 py-2"
+          setPageSize={setPageSize}
+          getPageSize={getPageSize}
+          getAllDataCount={getAllDataCount}
+          getLimitStart={getLimitStart}
+          setLimitStart={setLimitStart}
+        />
+      </div>
+    </DndContext>
+  );
+}
+
+// Helper function to determine background color based on status
+function getStatusBgColor(row: any) {
+  switch (row.original.status) {
+    case "Scheduled":
+      return "bg-[#D9EDE6]";
+    case "Transferred":
+      return "bg-[#F8F5C4]";
+    case "Inactive":
+      return "bg-[#FFE3E3]";
+    default:
+      return "bg-[#D9EDE6]";
+  }
+}
+
+// Helper function to determine text color based on status
+function getStatusColor(row: any) {
+  switch (row.original.status) {
+    case "Draft":
+      return "text-[#EF5D5D] bg-[#FFE3E3]";
+    case "Open":
+      return "text-[#1462E7] bg-[#DEEAFF]";
+    case "Scheduled":
+      return "text-[#BCA900] bg-[#F8F5C4]";
+    case "Completed":
+      return "text-[#008993] bg-[#D9EDE6]";
+    case "Active":
+      return "text-[#008993] bg-[#D9EDE6]";
+    case "Transferred":
+      return "text-[#BCA900] bg-[#F8F5C4]";
+    case "Inactive":
+      return "text-[#EF5D5D] bg-[#FFE3E3]";
+    case "Closed":
+      return "text-[#EF5D5D] bg-[#FFE3E3]";
+    case "Canceled":
+      return "text-[#BCA900] bg-[#F8F5C4]";
+    default:
+      return "";
+  }
+}
